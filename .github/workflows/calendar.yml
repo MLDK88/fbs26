@@ -1,0 +1,48 @@
+name: Hent SkoleIntra-kalender
+
+on:
+  schedule:
+    - cron: "17 4,10,16,22 * * *"   # fire gange i døgnet (UTC)
+  workflow_dispatch: {}               # kan også startes med knappen "Run workflow"
+
+concurrency:
+  group: calendar
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.save.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install cryptography
+      - name: Hent og krypter kalenderen
+        env:
+          CLASS_CALENDAR_ICS: ${{ secrets.CLASS_CALENDAR_ICS }}
+          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+        run: python scripts/fetch_calendar.py
+      - name: Gem hvis der er ændringer
+        id: save
+        run: |
+          if git diff --quiet data/calendar.enc.json; then echo "Ingen ændringer"; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git config user.name "aarshjul-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/calendar.enc.json
+          git commit -m "Opdater kalender fra SkoleIntra"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: fetch
+    if: needs.fetch.outputs.changed == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml

@@ -1,0 +1,3 @@
+{
+  "_forklaring": "Datoer som en gruppe har aftalt for opgaver uden dato i SkoleIntra. Format: \"skoleår.opgave\": \"ÅÅÅÅ-MM-DDTtt:mm\" (tid kan udelades). Eksempel: \"2026-27.halloween\": \"2026-10-30T16:00\""
+}
