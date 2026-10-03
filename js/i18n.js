@@ -78,6 +78,7 @@ const DA = {
   loginTitle: 'Årshjulet', loginSub: 'For forældre i Bh. klasse på Frederik Barfods Skole, årgang 2026.',
   password: 'Adgangskode', unlock: 'Lås op', wrongPw: 'Forkert adgangskode. Prøv igen.', loading: 'Henter …',
   loginHelp: 'Adgangskoden står i klassens forældregruppe.', loadError: 'Siden kunne ikke hentes. Tjek din forbindelse og prøv igen.',
+  noCrypto: 'Din browser kan ikke åbne siden. Brug adressen https://fbs26.dk i en opdateret browser.',
   logout: 'Log ud'
 };
 
@@ -135,6 +136,7 @@ const EN = {
   loginTitle: 'Year Wheel', loginSub: 'For parents in the kindergarten class at Frederik Barfods Skole, class of 2026.',
   password: 'Password', unlock: 'Unlock', wrongPw: 'Wrong password. Try again.', loading: 'Loading …',
   loginHelp: "The password is in the class's parent group.", loadError: "The page couldn't load. Check your connection and try again.",
+  noCrypto: "Your browser can't open this page. Use the address https://fbs26.dk in an up-to-date browser.",
   logout: 'Log out'
 };
 

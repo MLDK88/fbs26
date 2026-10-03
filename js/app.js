@@ -162,8 +162,12 @@ async function unlock(pw, interactive) {
   L.busy = true; L.error = ''; if (interactive) render();
   try {
     const env = await fetchJson('data/class.enc.json');
+    if (!window.crypto || !crypto.subtle) throw Object.assign(new Error('no crypto'), { key: 'noCrypto' });
     let D;
-    try { D = await decryptJson(env, pw); } catch (e) { throw Object.assign(new Error('pw'), { wrong: true }); }
+    try { D = await decryptJson(env, pw); } catch (e) {
+      // AES-GCM reports a wrong key as OperationError; anything else is a browser problem, not the password.
+      throw e && e.name === 'OperationError' ? Object.assign(new Error('pw'), { wrong: true }) : Object.assign(e, { key: 'noCrypto' });
+    }
     const [cal, ovr] = await Promise.all([
       fetchJson('data/calendar.enc.json').then(x => decryptJson(x, pw)).catch(() => null),
       fetchJson('data/overrides.json').catch(() => ({}))
@@ -174,7 +178,7 @@ async function unlock(pw, interactive) {
   } catch (e) {
     L.busy = false;
     if (e.wrong) store.set(PW_KEY, null);
-    L.error = e.wrong ? (interactive ? 'wrongPw' : '') : 'loadError';
+    L.error = e.wrong ? (interactive ? 'wrongPw' : '') : (e.key || 'loadError');
     render();
     const p = $('#pw'); if (p) { p.focus(); if (e.wrong) p.select(); }
   }
