@@ -124,6 +124,8 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .scrim-green { background: rgba(11, 61, 35, 0.35); z-index: 30; }
 .drawer { position: fixed; top: 0; left: 0; bottom: 0; width: min(84vw, 320px); z-index: 36; background: var(--cream); border-right: 2.5px solid var(--ink); padding: 20px 20px 32px; padding-top: calc(20px + env(safe-area-inset-top)); display: flex; flex-direction: column; gap: 20px; overflow: auto; animation: slide-in .22s cubic-bezier(.2, .7, .2, 1); }
 .drawer-title { font-size: 24px; letter-spacing: -0.02em; color: var(--ink); }
+.drawer-mode { display: flex; }
+.drawer-mode .seg button { max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; padding: 8px 16px; }
 .menu-item { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 16px; border-radius: 16px; font-size: 18px; font-weight: 700; text-decoration: none !important; border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink); }
 @keyframes slide-in { from { transform: translateX(-100%); } to { transform: none; } }
 @keyframes slide-up { from { transform: translateY(100%); } to { transform: none; } }

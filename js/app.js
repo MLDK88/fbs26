@@ -109,7 +109,7 @@ const A = {
   menu: () => set({ menuOpen: true }),
   closeMenu: () => set({ menuOpen: false }),
   alle: () => setMode('alle'),
-  barn: () => { if (!childById(S.barn) || S.mode === 'barn') set({ pickerOpen: true }); else setMode('barn'); },
+  barn: () => { if (!childById(S.barn) || S.mode === 'barn') set({ pickerOpen: true, menuOpen: false }); else setMode('barn'); },
   lang: d => { setLang(d.l); for (const k in last) delete last[k]; render(); },
   prevYear: () => { const yi = S.yearIdx == null ? ctx(S).yi : S.yearIdx; if (yi > 0) set({ yearIdx: yi - 1 }); },
   nextYear: () => { const yi = S.yearIdx == null ? ctx(S).yi : S.yearIdx; set({ yearIdx: Math.min(yi + 1, 9) }); },

@@ -311,6 +311,7 @@ export function overlays(S, c) {
   if (S.menuOpen && c.isM) {
     out.push(html`<div class="scrim" data-act="closeMenu"></div>
       <nav aria-label="${t('pages')}" class="drawer"><span class="disp drawer-title">${t('menu')}</span>
+        <div class="drawer-mode">${modeSwitch(c, false)}</div>
         <ul class="stack-10">${ROUTES.map(r => { const a = r.id === S.route; return html`<li><a href="${r.hash}" data-act="closeMenu" aria-current="${a ? 'page' : 'false'}" class="menu-item" style="color:${a ? '#FFFFFF' : INK}; background:${a ? '#008A40' : '#FFFFFF'}"><span class="ldot" style="background:${a ? '#FFFFFF' : MENU_DOTS[r.id]}"></span>${t('nav')[r.id]}</a></li>`; })}</ul>
         ${langSwitch('lang-drawer')}</nav>`);
   }
