@@ -3,7 +3,7 @@ import { html, raw } from './html.js';
 import { t, lang, cap, monthName, monthShort, monthCap, fmtDay, fmtDate, fmtLong, joinList, className } from './i18n.js';
 import {
   M, HUES, TINTS, ROUTES, today, isoWeek, feedHas, feedStale, currentYearIdx, childById, groupOfChild, groupsOf, gNum,
-  dutyInfo, nextDutyFor, calendarItems, whoText, dutyName, dutyMonthLabel, bdLabel
+  dutyInfo, nextDutyFor, calendarItems, dutyName, bdLabel
 } from './model.js';
 import { buildWheel, buildMiniWheel } from './wheel.js';
 
@@ -121,7 +121,6 @@ function viewHjul(S, c) {
 function viewAar(S, c) {
   const D = M.D, tg = S.matrixGroup, my = c.my, cy = c.cy;
   const onlyMine = c.barn && tg === my;
-  const view = S.matrixView;
   let headline, intro;
   if (c.barn) {
     const n = D.years.reduce((acc, y) => acc + D.duties.filter(d => groupsOf(D.assignments[y.id][d.id]).includes(my)).length, 0);
@@ -141,24 +140,6 @@ function viewAar(S, c) {
             <span class="chip chip-sm ${chip(inf.status)}">${t('status')[inf.status]}</span></button>`)}
           ${items.length ? '' : html`<span class="muted">${t('noDuties')}</span>`}</div></li>`;
     })}</ol>`;
-  } else if (view === 'tabel') {
-    const cols = D.duties.map(d => ({ name: dutyName(d), short: d.id === 'referent1' ? t('referentN', 1) : d.id === 'referent2' ? t('referentN', 2) : (lang === 'en' ? d.short_en : d.short), ml: dutyMonthLabel(d) }));
-    body = html`<div class="matrix-box"><div role="table" aria-label="${t('tableAria')}" class="matrix">
-      <div role="row" class="mrow mhead"><div role="columnheader" class="mcorner">${t('schoolYear')}</div>
-        ${cols.map(d => html`<div role="columnheader" class="mcolh"><span style="font-weight:600; line-height:1.3" title="${d.name}">${d.short}</span><span class="muted" style="font-size:12px">${d.ml}</span></div>`)}</div>
-      ${D.years.map((y, i) => {
-        const bg = i === cy ? '#E3F2E7' : '#FFFFFF';
-        return html`<div role="row" class="mrow" style="background:${bg}; opacity:${i < cy ? 0.65 : 1}">
-          <div role="rowheader" class="mrowh" style="background:${bg}">${className(y.class)}<span class="sub-label tnum" style="font-size:12px">${y.label}</span></div>
-          ${D.duties.map(d => {
-            const code = D.assignments[y.id][d.id];
-            if (!code) return html`<div role="cell" class="mcell"><span aria-label="${t('notThisYear')}" style="color:#B0B7B2; padding:6px 8px">–</span></div>`;
-            const groups = groupsOf(code), mine = c.barn && groups.includes(my);
-            const text = code === 'SKOLE' ? t('cellSchool') : code === 'REPR' ? t('cellRepr') : code === 'DIMISSION' ? t('cellDimission') : '';
-            return html`<div role="cell" class="mcell"><button class="mbtn" data-act="sheet" data-yi="${i}" data-did="${d.id}" aria-label="${className(y.class)}, ${dutyName(d)}: ${whoText(code)}" style="color:${c.barn && !mine ? '#6B7570' : '#1B2420'}; font-weight:${mine ? 600 : 500}">
-              ${groups.map(g => gdot(gNum(g), groupColor(g, c), 'gdot shrink0'))}${text ? html`<span style="font-size:13px; line-height:1.2">${text}</span>` : ''}</button></div>`;
-          })}</div>`;
-      })}</div></div>`;
   } else {
     body = html`<ol class="year-cards">${D.years.map((y, i) => {
       const infos = D.duties.filter(d => D.assignments[y.id][d.id]).map(d => dutyInfo(i, d.id));
@@ -175,10 +156,13 @@ function viewAar(S, c) {
     })}</ol>`;
   }
 
+  // Matches the dots in the mini wheels: group colour, or grey when no parent group has the duty.
   const legend = [...['G1', 'G2', 'G3', 'G4', 'G5', 'G6'].map(g => html`<li><span class="ldot" style="background:${groupColor(g, c)}"></span><span>${t('group', gNum(g))}</span></li>`),
-    html`<li><span>${t('cellSchool')}</span></li>`, html`<li><span>${t('cellRepr')}</span></li>`,
-    html`<li>${c.barn ? '' : html`<span style="display:inline-flex"><span class="ldot" style="background:#3A7BD5"></span><span class="ldot" style="background:#E8553D; margin-left:-4px"></span></span>`}<span>${t('shared')}</span></li>`,
-    html`<li><span>${t('cellDimission')}</span></li>`];
+    html`<li><span class="ldot" style="background:#B3AD9C"></span><span>${t('noGroupDuty')}</span></li>`];
+  const toolbar = [
+    c.barn ? html`<button data-act="onlyMine" aria-pressed="${onlyMine}" class="toggle"><span class="track" style="background:${onlyMine ? '#008A40' : '#C9CFCA'}"><span class="knob" style="left:${onlyMine ? '19px' : '3px'}"></span></span>${t('onlyMine')}</button>` : '',
+    tg && !onlyMine ? html`<p class="muted" style="font-size:15px">${t('groupFilterNote', gNum(tg))} <button data-act="clearMatrixGroup" class="ulink">${t('showFullOverview')}</button></p>` : ''
+  ].filter(Boolean);
 
   return html`<section class="stack-20">
     <div class="stack-4">
@@ -186,14 +170,7 @@ function viewAar(S, c) {
       <h1 class="disp h1-big" style="max-width:24ch">${headline}</h1>
       <p class="muted pretty" style="max-width:62ch; margin-top:4px">${intro}</p>
     </div>
-    <div class="toolbar">
-      <div role="group" aria-label="${t('viewOf10')}" class="seg seg-view">
-        <button data-act="view" data-v="hjul" aria-pressed="${view === 'hjul'}" class="${view === 'hjul' ? 'on-ink' : ''}">${t('hjul')}</button>
-        <button data-act="view" data-v="tabel" aria-pressed="${view === 'tabel'}" class="${view === 'tabel' ? 'on-ink' : ''}">${t('tabel')}</button>
-      </div>
-      ${c.barn ? html`<button data-act="onlyMine" aria-pressed="${onlyMine}" class="toggle"><span class="track" style="background:${onlyMine ? '#008A40' : '#C9CFCA'}"><span class="knob" style="left:${onlyMine ? '19px' : '3px'}"></span></span>${t('onlyMine')}</button>` : ''}
-      ${tg && !onlyMine ? html`<p class="muted" style="font-size:15px">${t('groupFilterNote', gNum(tg))} <button data-act="clearMatrixGroup" class="ulink">${t('showFullOverview')}</button></p>` : ''}
-    </div>
+    ${toolbar.length ? html`<div class="toolbar">${toolbar}</div>` : ''}
     ${body}
     <ul aria-label="${t('legend')}" class="legend">${legend}</ul></section>`;
 }

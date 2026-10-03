@@ -15,7 +15,7 @@ const mq = window.matchMedia('(max-width: 760px)');
 const S = {
   route: 'hjul', mode: 'alle', barn: null, isMobile: mq.matches,
   menuOpen: false, sheet: null, pickerOpen: false, yearIdx: null,
-  matrixGroup: null, matrixView: 'hjul', expanded: {}, search: '',
+  matrixGroup: null, expanded: {}, search: '',
   calFilter: 'alt', showPast: false, openEvent: null, phase2: false
 };
 const L = { busy: false, error: '' };
@@ -117,7 +117,6 @@ const A = {
   closeSheet: () => set({ sheet: null }),
   seeGroup: d => { S.sheet = null; S.expanded = { ...S.expanded, [d.g]: true }; go('grupper'); },
   openYear: d => { S.yearIdx = +d.yi; go('hjul'); window.scrollTo(0, 0); },
-  view: d => set({ matrixView: d.v }),
   onlyMine: () => { const c = ctx(S); set({ matrixGroup: S.matrixGroup === c.my ? null : c.my }); },
   clearMatrixGroup: () => set({ matrixGroup: null }),
   groupAll: d => { S.matrixGroup = d.g; go('aar'); window.scrollTo(0, 0); },
