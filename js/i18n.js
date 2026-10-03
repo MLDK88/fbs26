@@ -19,7 +19,7 @@ export function setLang(l) {
 const DA = {
   brand: 'Årshjulet', wheel: 'Årshjul',
   subline: (c, l) => `Årgang 2026 · Frederik Barfods Skole · ${c} ${l}`,
-  klassen: 'Klassen', heleKlassen: 'Hele klassen', mitBarn: 'Mit barn',
+  klassen: 'Klassen', mitBarn: 'Mit barn',
   openMenu: 'Åbn menu', view: 'Visning', pages: 'Sider', frontpage: 'Årshjulet, forsiden', menu: 'Menu', language: 'Sprog / Language',
   nav: { hjul: 'Årshjul', aar: 'De 10 år', grupper: 'Grupper', foedselsdage: 'Fødselsdage', kalender: 'Kalender' },
   prevYear: x => `Forrige år: ${x}`, nextYear: x => `Næste år: ${x}`,
@@ -84,7 +84,7 @@ const DA = {
 const EN = {
   brand: 'Year Wheel', wheel: 'Year wheel',
   subline: (c, l) => `Class of 2026 · Frederik Barfods Skole · ${c} ${l}`,
-  klassen: 'Class', heleKlassen: 'Whole class', mitBarn: 'My child',
+  klassen: 'Class', mitBarn: 'My child',
   openMenu: 'Open menu', view: 'View', pages: 'Pages', frontpage: 'Year Wheel, front page', menu: 'Menu', language: 'Sprog / Language',
   nav: { hjul: 'Year wheel', aar: 'The 10 years', grupper: 'Groups', foedselsdage: 'Birthdays', kalender: 'Calendar' },
   prevYear: x => `Previous year: ${x}`, nextYear: x => `Next year: ${x}`,

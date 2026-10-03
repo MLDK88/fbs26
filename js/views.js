@@ -45,7 +45,7 @@ function langSwitch(extraClass) {
 }
 function modeSwitch(c, mobile) {
   return html`<div role="group" aria-label="${t('view')}" class="seg ${mobile ? 'seg-m' : ''}">
-    <button data-act="alle" aria-pressed="${!c.barn}" class="${c.barn ? '' : 'on-ink'}">${mobile ? t('klassen') : t('heleKlassen')}</button>
+    <button data-act="alle" aria-pressed="${!c.barn}" class="${c.barn ? '' : 'on-ink'}">${t('klassen')}</button>
     <button data-act="barn" aria-pressed="${c.barn}" class="${c.barn ? 'on-green' : ''}">${c.child ? c.child.name : t('mitBarn')}</button></div>`;
 }
 export function header(S, c) {
