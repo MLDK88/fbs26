@@ -36,7 +36,7 @@ const DA = {
   schoolAnnounces: 'Skolen melder datoen ud', dateAgreedClass: 'Datoen aftales i klassen', dateAgreedGroup: 'Datoen aftales af gruppen',
   srcFeed: 'Fra SkoleIntra', srcWheel: 'Fra årshjulet', srcOverride: 'Aftalt af gruppen',
   dimissionTitle: 'Dimissionsfest', dimissionShort: 'Dimission',
-  hasBirthday: n => `${n} har fødselsdag`,
+  hasBirthday: n => `${n} har fødselsdag`, bdParty: g => `Fælles fødselsdagsfest: ${g}`, bdPartyNote: 'Fødselsdagsgruppen holder fælles fest, og hele klassen er inviteret.', bdPartyOn: w => `Fælles fest ${w}`,
   // De 10 år
   tenYears: 'De 10 år', mineHeadline: n => `${n} opgaver på 10 år`,
   mineIntro: n => `Gruppe ${n}, fra Bh. klasse til 9. klasse.`, mineNext: (title, m, y) => ` Næste: ${title}, ${m} ${y}.`,
@@ -101,7 +101,7 @@ const EN = {
   schoolAnnounces: 'The school announces the date', dateAgreedClass: 'Date agreed in class', dateAgreedGroup: 'The group sets the date',
   srcFeed: 'From SkoleIntra', srcWheel: 'From the year wheel', srcOverride: 'Agreed by the group',
   dimissionTitle: 'Graduation party', dimissionShort: 'Graduation',
-  hasBirthday: n => `${n}'s birthday`,
+  hasBirthday: n => `${n}'s birthday`, bdParty: g => `Shared birthday party: ${g}`, bdPartyNote: 'The birthday group holds a shared party, and the whole class is invited.', bdPartyOn: w => `Shared party ${w}`,
   tenYears: 'The 10 years', mineHeadline: n => `${n} duties over 10 years`,
   mineIntro: n => `Group ${n}, from kindergarten class to grade 9.`, mineNext: (title, m, y) => ` Next: ${title}, ${m} ${y}.`,
   allHeadline: 'From kindergarten class to grade 9',

@@ -81,12 +81,14 @@ function matchFeed(yi, did) {
 }
 
 // overrides.json: { "2026-27.halloween": "2026-10-30T16:00" } — a date the group agreed on.
-function overrideFor(y, did) {
-  const v = M.overrides[`${y.id}.${did}`];
+// Shared birthday parties use the birthday group: { "2026-27.fest.efteraar": "2026-11-02T14:00" }.
+function overrideAt(key) {
+  const v = M.overrides[key];
   if (!v || !/^\d{4}-\d{2}-\d{2}/.test(v)) return null;
   const tm = v.length >= 16 ? v.slice(11, 16).replace(':', '.') : null;
   return { s: v.slice(0, 10), time: tm, t: null, override: true };
 }
+const overrideFor = (y, did) => overrideAt(`${y.id}.${did}`);
 
 export function statusOf(date) {
   const tt = today();
@@ -145,9 +147,13 @@ export function calendarItems() {
   M.D.children.forEach(c => {
     const [m, dd] = c.birthday.split('-').map(Number);
     const d = new Date(m >= 8 ? y.start : y.start + 1, m - 1, dd, 12);
-    items.push({ id: 'bd-' + c.id, date: d, kind: 'foedselsdag', title: t('hasBirthday', c.name), sub: null, source: feedHas() ? t('srcFeed') : t('srcWheel'), child: c });
+    items.push({ id: 'bd-' + c.id, date: d, kind: 'foedselsdag', title: t('hasBirthday', c.name), sub: null, source: feedHas() ? t('srcFeed') : t('srcWheel'), child: c, bg: c.bg });
   });
-  const order = { ferie: 0, skole: 1, opgave: 2, foedselsdag: 3 };
+  Object.keys(M.D.bdGroups).forEach(bg => {
+    const ev = overrideAt(`${y.id}.fest.${bg}`); if (!ev) return;
+    items.push({ id: 'fest-' + bg, date: parseD(ev.s), kind: 'fest', title: t('bdParty', bdLabel(bg)), sub: ev.time ? t('kl', ev.time) : null, source: t('srcOverride'), bg, time: ev.time });
+  });
+  const order = { ferie: 0, skole: 1, opgave: 2, fest: 3, foedselsdag: 4 };
   items.sort((a, b) => a.date - b.date || order[a.kind] - order[b.kind]);
   return items;
 }

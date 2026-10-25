@@ -109,7 +109,7 @@ function viewHjul(S, c) {
         <ul class="next-list">${items.map(e => html`<li class="next-item">
           <span class="muted tnum nowrap">${undated(e) ? monthCap(e.date.getMonth()) : fmtDay(e.date)}</span>
           <span class="icon-cell">${e.kind === 'opgave' ? gdot(e.groups[0] ? gNum(e.groups[0]) : '·', e.groups[0] ? groupColor(e.groups[0], c) : '#6B7570')
-            : e.kind === 'skole' ? ICON.school() : e.kind === 'ferie' ? ICON.holiday() : ICON.cake(M.D.bdGroups[e.child.bg].color)}</span>
+            : e.kind === 'skole' ? ICON.school() : e.kind === 'ferie' ? ICON.holiday() : ICON.cake(M.D.bdGroups[e.bg].color)}</span>
           <span class="ellipsis">${e.title}${e.kind === 'ferie' ? html`<span class="muted"> · ${t('week', isoWeek(e.date))}</span>` : undated(e) ? html`<span class="muted"> · ${t('dateTbd')}</span>` : ''}</span>
         </li>`)}</ul>
         <div><a href="#/kalender" class="strong-link">${t('seeCalendar')}</a></div>
@@ -222,7 +222,7 @@ function viewGrupper(S, c) {
 // ---------- Fødselsdage ----------
 function viewFoedselsdage(S, c) {
   const D = M.D, tt = today();
-  const bd = calendarItems().filter(e => e.kind === 'foedselsdag');
+  const all = calendarItems(), bd = all.filter(e => e.kind === 'foedselsdag');
   const myBg = c.child ? c.child.bg : null;
   const nb = bd.filter(e => e.date >= tt && (!c.barn || e.child.bg === myBg))[0];
   const nextText = nb ? `${c.barn ? t('nextBdAmong', bdLabel(myBg)) : t('nextBdClass')}: ${nb.child.name}, ${fmtLong(nb.date, false)}` : t('noMoreBd');
@@ -231,9 +231,11 @@ function viewFoedselsdage(S, c) {
     const kids = bd.filter(e => e.child.bg === key).sort((a, b) => a.date.getMonth() - b.date.getMonth() || a.date.getDate() - b.date.getDate());
     const sel = e => c.child && e.child.id === c.child.id;
     const span = kids.length ? t('bdSpan', fmtDate(kids[0].date), fmtDate(kids[kids.length - 1].date)) : '';
+    const party = all.find(e => e.kind === 'fest' && e.bg === key);
     return html`<article aria-label="${bdLabel(key)}" class="card" style="background:${isMine ? '#F3FAF5' : '#FFFFFF'}">
       <div class="row-wrap"><span class="ldot" style="width:14px; height:14px; background:${D.bdGroups[key].color}"></span><h2 class="disp h2-card">${bdLabel(key)}</h2>${isMine ? html`<span class="mine-badge">${t('yourGroup')}</span>` : ''}</div>
       <p class="muted" style="font-size:13px">${span}</p>
+      ${party ? html`<p style="display:flex; align-items:flex-start; gap:8px; font-size:14px; font-weight:600; opacity:${party.date < tt ? 0.65 : 1}"><span class="icon-cell" style="width:20px; height:20px">${ICON.cake(D.bdGroups[key].color)}</span>${t('bdPartyOn', fmtLong(party.date, true) + (party.time ? t('atTime', party.time) : ''))}</p>` : ''}
       <ul class="stack-0">${kids.map(e => html`<li class="bd-kid" style="background:${sel(e) ? '#E3F2E7' : 'transparent'}"><span style="font-weight:${sel(e) ? 700 : 500}">${e.child.name}</span><span class="muted tnum nowrap" style="margin-left:auto; font-size:14px">${fmtDate(e.date)}</span></li>`)}</ul>
     </article>`;
   });
@@ -249,7 +251,7 @@ function viewKalender(S, c) {
   const D = M.D, tt = today(), CY = D.years[c.cy], my = c.my;
   const filters = ['alt', 'skolen', 'ferie', 'foedselsdage'].concat(c.barn ? ['vores'] : []);
   const f = S.calFilter;
-  const ok = e => f === 'alt' || (f === 'skolen' && e.kind === 'skole') || (f === 'ferie' && e.kind === 'ferie') || (f === 'foedselsdage' && e.kind === 'foedselsdag') || (f === 'vores' && e.kind === 'opgave' && e.groups.includes(my));
+  const ok = e => f === 'alt' || (f === 'skolen' && e.kind === 'skole') || (f === 'ferie' && e.kind === 'ferie') || (f === 'foedselsdage' && (e.kind === 'foedselsdag' || e.kind === 'fest')) || (f === 'vores' && e.kind === 'opgave' && e.groups.includes(my));
   const filtered = calendarItems().filter(ok);
   const isPast = e => (e.end || e.date) < tt;
   const pastCount = filtered.filter(isPast).length;
@@ -264,15 +266,16 @@ function viewKalender(S, c) {
     if (e.kind === 'skole') detail = `${e.time ? t('kl', e.time) : t('allDay')} · ${t('fromClassCal')}`;
     else if (e.kind === 'ferie') detail = `${e.end ? fmtLong(e.date, false) + t('spanTo') + fmtLong(e.end, false) : fmtLong(e.date, false)} · ${t('fromClassCal')}`;
     else if (e.kind === 'foedselsdag') detail = `${bdLabel(e.child.bg)} · ${t('group', gNum(groupOfChild(e.child.id)))}`;
+    else if (e.kind === 'fest') detail = `${fmtLong(e.date, false)}${e.time ? t('atTime', e.time) : ''} · ${t('bdPartyNote')}`;
     const iconColor = e.kind === 'opgave' ? (c.barn ? (e.groups.includes(my) ? '#008A40' : '#9AA29D') : (e.groups[0] ? HUES[e.groups[0]] : '#6B7570')) : '';
     const act = e.kind === 'opgave' ? html`data-act="sheet" data-yi="${e.info.yi}" data-did="${e.info.did}"` : html`data-act="openEvent" data-id="${e.id}"`;
     m.items.push(html`<li style="border-top:1px solid #EADFC4"><button ${act} aria-expanded="${open}" class="cal-item" style="opacity:${isPast(e) ? 0.65 : 1}">
       <span class="stack-0" style="font-size:15px"><span class="muted tnum nowrap">${e.kind === 'opgave' && !e.info.ev ? cap(monthShort(e.date.getMonth())) : fmtDay(e.date)}</span>${wk !== m.lastWeek ? html`<span style="font-size:12px; color:#9AA29D">${t('week', wk)}</span>` : ''}</span>
-      <span class="icon-cell" style="width:24px; height:24px">${e.kind === 'opgave' ? ICON.duty(iconColor) : e.kind === 'skole' ? ICON.school() : e.kind === 'ferie' ? ICON.holiday() : ICON.cake(D.bdGroups[e.child.bg].color)}</span>
+      <span class="icon-cell" style="width:24px; height:24px">${e.kind === 'opgave' ? ICON.duty(iconColor) : e.kind === 'skole' ? ICON.school() : e.kind === 'ferie' ? ICON.holiday() : ICON.cake(D.bdGroups[e.bg].color)}</span>
       <span class="stack-2" style="min-width:0"><span class="pretty" style="font-weight:${e.kind === 'opgave' ? 600 : 500}; color:${c.barn && e.kind === 'opgave' && !e.groups.includes(my) ? '#6B7570' : '#1B2420'}">${e.title}</span>
         <span class="muted" style="font-size:13px">${[e.sub, e.source].filter(Boolean).join(' · ')}</span>
         ${open ? html`<span style="font-size:14px; color:#1B2420; padding-top:4px">${detail}</span>` : ''}</span>
-      <span class="dots">${e.kind === 'opgave' ? e.groups.map(g => gdot(gNum(g), groupColor(g, c))) : ''}${e.kind === 'foedselsdag' ? html`<span class="ldot" style="width:10px; height:10px; background:${D.bdGroups[e.child.bg].color}"></span>` : ''}</span>
+      <span class="dots">${e.kind === 'opgave' ? e.groups.map(g => gdot(gNum(g), groupColor(g, c))) : ''}${e.kind === 'foedselsdag' || e.kind === 'fest' ? html`<span class="ldot" style="width:10px; height:10px; background:${D.bdGroups[e.bg].color}"></span>` : ''}</span>
     </button></li>`);
     m.lastWeek = wk;
   });

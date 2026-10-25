@@ -34,6 +34,14 @@ Ret `data/overrides.json` direkte på GitHub (blyant-ikonet) og tilføj en linje
 Nøglen er `skoleår.opgave`. Opgaverne hedder: `referent1`, `foraeldredag`, `halloween`, `jul`,
 `kontakt`, `foraeldrefest`, `referent2`, `koloni`, `sommerfest`.
 
+### Tilføje en fælles fødselsdagsfest
+Hver fødselsdagsgruppe holder en fælles fest, hvor hele klassen er inviteret. Tilføj en linje i `data/overrides.json`:
+```json
+"2026-27.fest.efteraar": "2026-11-02T14:00"
+```
+Nøglen er `skoleår.fest.gruppe`. Grupperne hedder: `vinter`, `foraar`, `sommer`, `efteraar`.
+Festen vises under "Næste i klassen" på årshjulet, i kalenderen og på gruppens kort under Fødselsdage.
+
 ### Rette grupper, børn, opgaver eller fordelingen
 Dataene er krypteret, så det kræver en computer med Python:
 ```bash
