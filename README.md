@@ -42,6 +42,18 @@ Hver fødselsdagsgruppe holder en fælles fest, hvor hele klassen er inviteret. 
 Nøglen er `skoleår.fest.gruppe`. Grupperne hedder: `vinter`, `foraar`, `sommer`, `efteraar`.
 Festen vises under "Næste i klassen" på årshjulet, i kalenderen og på gruppens kort under Fødselsdage.
 
+### Tilføje en legeaftale
+Hver legegruppe har et barn som vært hver måned (se siden Legegrupper). Når værtsfamilien har aftalt datoen,
+tilføj en linje i `data/overrides.json`:
+```json
+"2026-27.leg.3.november": "2026-11-12T15:00"
+```
+Nøglen er `skoleår.leg.gruppe.måned`, fx `leg.1.oktober` eller `leg.5.januar` (måneden skrives på dansk med små bogstaver).
+Legeaftalen vises på Legegrupper, i kalenderen og under "Næste i klassen" for børnene i gruppen.
+
+Selve legegrupperne og værterne ligger krypteret i `class.json` under `playGroups`:
+`{ "2026-27": { "1": { "10": ["barnets-id"], "11": [...] } } }` (gruppe → måned → vært).
+
 ### Rette grupper, børn, opgaver eller fordelingen
 Dataene er krypteret, så det kræver en computer med Python:
 ```bash

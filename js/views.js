@@ -3,12 +3,12 @@ import { html, raw } from './html.js';
 import { t, lang, cap, monthName, monthShort, monthCap, fmtDay, fmtDate, fmtLong, joinList, className } from './i18n.js';
 import {
   M, HUES, TINTS, ROUTES, today, isoWeek, feedHas, feedStale, currentYearIdx, childById, groupOfChild, groupsOf, gNum,
-  dutyInfo, nextDutyFor, calendarItems, dutyName, bdLabel
+  dutyInfo, nextDutyFor, calendarItems, dutyName, bdLabel, PLAY_HUES, playYear, playGroupOf, playMembers, playDates
 } from './model.js';
 import { buildWheel, buildMiniWheel } from './wheel.js';
 
 const INK = '#14201A';
-const MENU_DOTS = { hjul: '#FFD23F', aar: '#BFE3FF', grupper: '#C8E86B', foedselsdage: '#FFC2DE', kalender: '#D9CCFF' };
+const MENU_DOTS = { hjul: '#FFD23F', aar: '#BFE3FF', grupper: '#C8E86B', foedselsdage: '#FFC2DE', leg: '#FFD9A8', kalender: '#D9CCFF' };
 
 // ---------- icons ----------
 const ICON = {
@@ -16,6 +16,7 @@ const ICON = {
   holiday: () => html`<svg viewBox="0 0 24 24" width="20" height="20" aria-label="${t('iconHoliday')}" style="fill:none; stroke:#B5603A; stroke-width:1.8; stroke-linecap:round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></svg>`,
   cake: c => html`<svg viewBox="0 0 24 24" width="20" height="20" aria-label="${t('iconBirthday')}" style="fill:none; stroke:${c}; stroke-width:1.8; stroke-linejoin:round; stroke-linecap:round"><rect x="4" y="10" width="16" height="10" rx="1.5"/><path d="M4 14h16M12 10v10"/><path d="M12 10c-3 0-5-1.5-5-3a2 2 0 0 1 4 0c0 1.5 1 3 1 3s1-1.5 1-3a2 2 0 0 1 4 0c0 1.5-2 3-5 3z"/></svg>`,
   duty: c => html`<svg viewBox="0 0 24 24" width="20" height="20" aria-label="${t('iconDuty')}" style="fill:none; stroke:${c}; stroke-width:1.8; stroke-linejoin:round; stroke-linecap:round"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 13l2 2 4-4"/></svg>`,
+  play: c => html`<svg viewBox="0 0 24 24" width="20" height="20" aria-label="${t('iconPlay')}" style="fill:none; stroke:${c}; stroke-width:1.8; stroke-linejoin:round; stroke-linecap:round"><path d="M4 11 12 4l8 7"/><path d="M6 9.5V20h12V9.5"/><circle cx="12" cy="14" r="2.5"/></svg>`,
   flagDa: raw('<svg viewBox="0 0 37 28" width="24" height="18" aria-hidden="true" class="flag"><rect width="37" height="28" fill="#C8102E"/><rect x="12" width="4" height="28" fill="#FFFFFF"/><rect y="12" width="37" height="4" fill="#FFFFFF"/></svg>'),
   flagEn: raw('<svg viewBox="0 0 60 30" width="24" height="18" preserveAspectRatio="none" aria-hidden="true" class="flag"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#FFFFFF" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#C8102E" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#FFFFFF" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/></svg>')
 };
@@ -87,7 +88,8 @@ function viewHjul(S, c) {
 
   const cal = calendarItems();
   const undated = e => e.kind === 'opgave' && !e.info.ev, sk = e => undated(e) ? e.info.first : e.date;
-  const items = cal.filter(e => (undated(e) ? e.info.last : (e.end || e.date)) >= tt).sort((x, y) => sk(x) - sk(y)).slice(0, 5);
+  const myPg = c.barn ? playGroupOf(c.child.id) : null;
+  const items = cal.filter(e => e.kind !== 'leg' || e.pg === myPg).filter(e => (undated(e) ? e.info.last : (e.end || e.date)) >= tt).sort((x, y) => sk(x) - sk(y)).slice(0, 5);
   const feedMsg = feedHas() ? (feedStale() ? t('feedOff') : '') : t('feedEmpty');
 
   return html`<section class="hjul-grid">
@@ -109,7 +111,7 @@ function viewHjul(S, c) {
         <ul class="next-list">${items.map(e => html`<li class="next-item">
           <span class="muted tnum nowrap">${undated(e) ? monthCap(e.date.getMonth()) : fmtDay(e.date)}</span>
           <span class="icon-cell">${e.kind === 'opgave' ? gdot(e.groups[0] ? gNum(e.groups[0]) : '·', e.groups[0] ? groupColor(e.groups[0], c) : '#6B7570')
-            : e.kind === 'skole' ? ICON.school() : e.kind === 'ferie' ? ICON.holiday() : ICON.cake(M.D.bdGroups[e.bg].color)}</span>
+            : e.kind === 'skole' ? ICON.school() : e.kind === 'ferie' ? ICON.holiday() : e.kind === 'leg' ? ICON.play(PLAY_HUES[e.pg]) : ICON.cake(M.D.bdGroups[e.bg].color)}</span>
           <span class="ellipsis">${e.title}${e.kind === 'ferie' ? html`<span class="muted"> · ${t('week', isoWeek(e.date))}</span>` : undated(e) ? html`<span class="muted"> · ${t('dateTbd')}</span>` : ''}</span>
         </li>`)}</ul>
         <div><a href="#/kalender" class="strong-link">${t('seeCalendar')}</a></div>
@@ -246,12 +248,41 @@ function viewFoedselsdage(S, c) {
     <div class="bd-grid">${cards}</div></section>`;
 }
 
+// ---------- Legegrupper ----------
+function viewLeg(S, c) {
+  const P = playYear(), tt = today();
+  if (!P) return html`<section class="stack-20"><h1 class="disp h1-mid">${t('playGroups')}</h1><p class="muted">${t('playNone')}</p></section>`;
+  const myPg = c.child ? playGroupOf(c.child.id) : null;
+  let codes = Object.keys(P).sort((a, b) => a - b);
+  if (c.barn && myPg) codes = [myPg, ...codes.filter(g => g !== myPg)];
+  const all = codes.flatMap(playDates).filter(p => p.ev && p.date >= tt && (!c.barn || p.g === myPg)).sort((a, b) => a.date - b.date);
+  const nx = all[0];
+  const nextText = nx ? t('playNext', joinList(nx.hosts.map(k => k.name)), fmtLong(nx.date, false) + (nx.ev.time ? t('atTime', nx.ev.time) : '')) : '';
+  const when = p => p.ev ? fmtLong(p.date, false) + (p.ev.time ? t('atTime', p.ev.time) : '') : `${monthCap(p.month - 1)} · ${t('dateTbd')}`;
+  const cards = codes.map(g => {
+    const isMine = c.barn && g === myPg;
+    const sel = p => c.child && p.hosts.some(k => k.id === c.child.id);
+    return html`<article aria-label="${t('playGroup', g)}" class="card" style="background:${isMine ? '#E3F2E7' : '#FFFFFF'}">
+      <div class="row-wrap"><span class="gdot gdot-lg" style="background:${PLAY_HUES[g]}">${g}</span><h2 class="disp h2-card">${t('playGroup', g)}</h2>${isMine ? html`<span class="mine-badge">${t('yourGroup')}</span>` : ''}</div>
+      <p class="pretty">${joinList(playMembers(g).map(id => childById(id).name))}</p>
+      <ul class="stack-0">${playDates(g).map(p => html`<li class="bd-kid" style="background:${sel(p) ? '#CDEFD6' : 'transparent'}; opacity:${p.status === 'done' ? 0.65 : 1}">
+        <span class="stack-0"><span style="font-weight:600">${joinList(p.hosts.map(k => k.name))}</span>
+          <span class="muted tnum" style="font-size:14px">${when(p)}</span></span>
+        <span class="chip chip-sm ${chip(p.status)}" style="margin-left:auto">${t('status')[p.status]}</span></li>`)}</ul>
+    </article>`;
+  });
+  return html`<section class="stack-20">
+    <h1 class="disp h1-mid">${t('playGroups')}</h1>
+    <div class="stack-6" style="max-width:62ch">${nextText ? html`<p class="pretty" style="font-size:19px; font-weight:500">${nextText}</p>` : ''}<p class="muted pretty" style="font-size:15px">${t('playIntro')}</p></div>
+    <div class="bd-grid">${cards}</div></section>`;
+}
+
 // ---------- Kalender ----------
 function viewKalender(S, c) {
   const D = M.D, tt = today(), CY = D.years[c.cy], my = c.my;
-  const filters = ['alt', 'skolen', 'ferie', 'foedselsdage'].concat(c.barn ? ['vores'] : []);
+  const filters = ['alt', 'skolen', 'ferie', 'foedselsdage'].concat(playYear() ? ['leg'] : []).concat(c.barn ? ['vores'] : []);
   const f = S.calFilter;
-  const ok = e => f === 'alt' || (f === 'skolen' && e.kind === 'skole') || (f === 'ferie' && e.kind === 'ferie') || (f === 'foedselsdage' && (e.kind === 'foedselsdag' || e.kind === 'fest')) || (f === 'vores' && e.kind === 'opgave' && e.groups.includes(my));
+  const ok = e => f === 'alt' || (f === 'skolen' && e.kind === 'skole') || (f === 'ferie' && e.kind === 'ferie') || (f === 'foedselsdage' && (e.kind === 'foedselsdag' || e.kind === 'fest')) || (f === 'leg' && e.kind === 'leg') || (f === 'vores' && e.kind === 'opgave' && e.groups.includes(my));
   const filtered = calendarItems().filter(ok);
   const isPast = e => (e.end || e.date) < tt;
   const pastCount = filtered.filter(isPast).length;
@@ -266,16 +297,17 @@ function viewKalender(S, c) {
     if (e.kind === 'skole') detail = `${e.time ? t('kl', e.time) : t('allDay')} · ${t('fromClassCal')}`;
     else if (e.kind === 'ferie') detail = `${e.end ? fmtLong(e.date, false) + t('spanTo') + fmtLong(e.end, false) : fmtLong(e.date, false)} · ${t('fromClassCal')}`;
     else if (e.kind === 'foedselsdag') detail = `${bdLabel(e.child.bg)} · ${t('group', gNum(groupOfChild(e.child.id)))}`;
+    else if (e.kind === 'leg') detail = `${t('playGroup', e.pg)}: ${joinList(playMembers(e.pg).map(id => childById(id).name))}`;
     else if (e.kind === 'fest') detail = `${fmtLong(e.date, false)}${e.time ? t('atTime', e.time) : ''} · ${t('bdPartyNote')}`;
     const iconColor = e.kind === 'opgave' ? (c.barn ? (e.groups.includes(my) ? '#008A40' : '#9AA29D') : (e.groups[0] ? HUES[e.groups[0]] : '#6B7570')) : '';
     const act = e.kind === 'opgave' ? html`data-act="sheet" data-yi="${e.info.yi}" data-did="${e.info.did}"` : html`data-act="openEvent" data-id="${e.id}"`;
     m.items.push(html`<li style="border-top:1px solid #EADFC4"><button ${act} aria-expanded="${open}" class="cal-item" style="opacity:${isPast(e) ? 0.65 : 1}">
       <span class="stack-0" style="font-size:15px"><span class="muted tnum nowrap">${e.kind === 'opgave' && !e.info.ev ? cap(monthShort(e.date.getMonth())) : fmtDay(e.date)}</span>${wk !== m.lastWeek ? html`<span style="font-size:12px; color:#9AA29D">${t('week', wk)}</span>` : ''}</span>
-      <span class="icon-cell" style="width:24px; height:24px">${e.kind === 'opgave' ? ICON.duty(iconColor) : e.kind === 'skole' ? ICON.school() : e.kind === 'ferie' ? ICON.holiday() : ICON.cake(D.bdGroups[e.bg].color)}</span>
+      <span class="icon-cell" style="width:24px; height:24px">${e.kind === 'opgave' ? ICON.duty(iconColor) : e.kind === 'skole' ? ICON.school() : e.kind === 'ferie' ? ICON.holiday() : e.kind === 'leg' ? ICON.play(PLAY_HUES[e.pg]) : ICON.cake(D.bdGroups[e.bg].color)}</span>
       <span class="stack-2" style="min-width:0"><span class="pretty" style="font-weight:${e.kind === 'opgave' ? 600 : 500}; color:${c.barn && e.kind === 'opgave' && !e.groups.includes(my) ? '#6B7570' : '#1B2420'}">${e.title}</span>
         <span class="muted" style="font-size:13px">${[e.sub, e.source].filter(Boolean).join(' · ')}</span>
         ${open ? html`<span style="font-size:14px; color:#1B2420; padding-top:4px">${detail}</span>` : ''}</span>
-      <span class="dots">${e.kind === 'opgave' ? e.groups.map(g => gdot(gNum(g), groupColor(g, c))) : ''}${e.kind === 'foedselsdag' || e.kind === 'fest' ? html`<span class="ldot" style="width:10px; height:10px; background:${D.bdGroups[e.bg].color}"></span>` : ''}</span>
+      <span class="dots">${e.kind === 'opgave' ? e.groups.map(g => gdot(gNum(g), groupColor(g, c))) : ''}${e.kind === 'foedselsdag' || e.kind === 'fest' ? html`<span class="ldot" style="width:10px; height:10px; background:${D.bdGroups[e.bg].color}"></span>` : ''}${e.kind === 'leg' ? gdot(e.pg, PLAY_HUES[e.pg]) : ''}</span>
     </button></li>`);
     m.lastWeek = wk;
   });
@@ -292,7 +324,7 @@ function viewKalender(S, c) {
 }
 
 export function main(S, c) {
-  return ({ hjul: viewHjul, aar: viewAar, grupper: viewGrupper, foedselsdage: viewFoedselsdage, kalender: viewKalender })[S.route](S, c);
+  return ({ hjul: viewHjul, aar: viewAar, grupper: viewGrupper, foedselsdage: viewFoedselsdage, leg: viewLeg, kalender: viewKalender })[S.route](S, c);
 }
 
 // ---------- footer ----------
