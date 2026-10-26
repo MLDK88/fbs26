@@ -3,12 +3,12 @@ import { html, raw } from './html.js';
 import { t, lang, cap, monthName, monthShort, monthCap, fmtDay, fmtDate, fmtLong, joinList, className } from './i18n.js';
 import {
   M, HUES, TINTS, ROUTES, today, isoWeek, feedHas, feedStale, currentYearIdx, childById, groupOfChild, groupsOf, gNum,
-  dutyInfo, nextDutyFor, calendarItems, dutyName, bdLabel
+  dutyInfo, nextDutyFor, calendarItems, dutyName, bdLabel, PLAY_HUES, playGroupOf, playMonths
 } from './model.js';
 import { buildWheel, buildMiniWheel } from './wheel.js';
 
 const INK = '#14201A';
-const MENU_DOTS = { hjul: '#FFD23F', aar: '#BFE3FF', grupper: '#C8E86B', foedselsdage: '#FFC2DE', kalender: '#D9CCFF' };
+const MENU_DOTS = { hjul: '#FFD23F', aar: '#BFE3FF', grupper: '#C8E86B', leg: '#FFB870', foedselsdage: '#FFC2DE', kalender: '#D9CCFF' };
 
 // ---------- icons ----------
 const ICON = {
@@ -219,6 +219,44 @@ function viewGrupper(S, c) {
     <div class="group-grid">${cards}</div></section>`;
 }
 
+// ---------- Legegrupper ----------
+function viewLeg(S, c) {
+  const D = M.D, P = D.playGroups, months = playMonths();
+  const mine = c.barn ? playGroupOf(c.child.id) : null;
+  const now = months.find(m => m.status === 'now');
+  const mName = m => `${monthName(m.m)} ${m.y}`;
+  let lead;
+  if (c.barn && mine) {
+    const m = months.find(x => x.hosts.find(h => h.g === mine).child === c.child);
+    lead = m ? (m.status === 'done' ? t('playYourTurnDone', c.child.name, mName(m)) : t('playYourTurn', c.child.name, mName(m))) : '';
+    if (now) { const h = now.hosts.find(h => h.g === mine).child; lead += h && h !== c.child ? '. ' + t('playThisMonth', monthName(now.m), h.name) : ''; }
+  } else lead = now ? '' : (months.length && months[months.length - 1].status === 'done' ? t('playOver') : t('playNoneNow'));
+
+  let codes = Object.keys(P.groups);
+  if (mine) codes = [mine, ...codes.filter(g => g !== mine)];
+  const cards = codes.map(g => {
+    const isMine = g === mine;
+    return html`<article aria-label="${t('playGroup', gNum(g))}" class="card" style="background:${isMine ? '#E3F2E7' : '#FFFFFF'}">
+      <div class="row-wrap"><span class="gdot gdot-lg" style="background:${c.barn && !isMine ? '#B6BDB8' : PLAY_HUES[g]}">${gNum(g)}</span>
+        <h2 class="disp h2-card">${t('playGroup', gNum(g))}</h2>${isMine ? html`<span class="mine-badge">${t('yourGroup')}</span>` : ''}</div>
+      <ul class="stack-0">${months.map(m => {
+        const k = m.hosts.find(h => h.g === g).child, sel = k && c.child && k.id === c.child.id;
+        return html`<li class="bd-kid" style="background:${sel ? '#CDEFD6' : m.status === 'now' ? '#FFF6D6' : 'transparent'}; opacity:${m.status === 'done' ? 0.6 : 1}">
+          <span class="muted tnum" style="width:84px; font-size:14px">${monthCap(m.m)}</span>
+          <span class="${k ? '' : 'muted'}" style="font-weight:${sel ? 700 : k ? 500 : 400}; font-size:${k ? 16 : 14}px">${k ? k.name : t('playNoHost')}</span>
+          ${m.status === 'now' ? html`<span class="chip chip-sm st-now" style="margin-left:auto">${t('status').now}</span>` : ''}</li>`;
+      })}</ul></article>`;
+  });
+
+  return html`<section class="stack-20">
+    <h1 class="disp h1-mid">${t('nav').leg}</h1>
+    <div class="stack-6" style="max-width:62ch">
+      ${now && !c.barn ? html`<p class="pretty" style="font-size:19px; font-weight:500">${t('playNowClass', monthName(now.m))}: ${joinList(now.hosts.filter(h => h.child).map(h => h.child.name))}</p>` : ''}
+      ${lead ? html`<p class="pretty" style="font-size:19px; font-weight:500">${lead}</p>` : ''}
+      <p class="muted pretty" style="font-size:15px">${t('playIntro')}</p></div>
+    <div class="bd-grid">${cards}</div></section>`;
+}
+
 // ---------- Fødselsdage ----------
 function viewFoedselsdage(S, c) {
   const D = M.D, tt = today();
@@ -292,7 +330,7 @@ function viewKalender(S, c) {
 }
 
 export function main(S, c) {
-  return ({ hjul: viewHjul, aar: viewAar, grupper: viewGrupper, foedselsdage: viewFoedselsdage, kalender: viewKalender })[S.route](S, c);
+  return ({ hjul: viewHjul, aar: viewAar, grupper: viewGrupper, leg: viewLeg, foedselsdage: viewFoedselsdage, kalender: viewKalender })[S.route](S, c);
 }
 
 // ---------- footer ----------

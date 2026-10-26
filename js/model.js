@@ -2,10 +2,11 @@
 import { t, lang, cap, monthName, monthCap, fmtLong, fmtSpan, joinList, feedTitle } from './i18n.js';
 
 export const HUES = { G1: '#3A7BD5', G2: '#E8553D', G3: '#B07800', G4: '#C2408A', G5: '#6A4FC9', G6: '#13857E' };
+export const PLAY_HUES = { L1: '#D98A1E', L2: '#E8553D', L3: '#3F7D4E', L4: '#3A7BD5', L5: '#8B6508' };
 export const TINTS = { G1: '#D3E4FF', G2: '#FFD8CC', G3: '#FFE9A8', G4: '#FFD3EA', G5: '#E1D8FF', G6: '#C6EFEA' };
 export const ROUTES = [
   { id: 'hjul', hash: '#/' }, { id: 'aar', hash: '#/de-10-aar' }, { id: 'grupper', hash: '#/grupper' },
-  { id: 'foedselsdage', hash: '#/foedselsdage' }, { id: 'kalender', hash: '#/kalender' }
+  { id: 'leg', hash: '#/legegrupper' }, { id: 'foedselsdage', hash: '#/foedselsdage' }, { id: 'kalender', hash: '#/kalender' }
 ];
 
 export const M = { D: null, feed: [], meta: null, overrides: {} };
@@ -127,6 +128,18 @@ export function nextDutyFor(g) {
     if (c.length) return { info: c[0], laterYear: yi !== cy };
   }
   return null;
+}
+
+// Play groups: each month one child's family arranges a play date for their group.
+// class.json: playGroups = { year, months: ['2026-10', ...], groups: { L1: [childId|null per month] } }
+export const playGroupOf = id => { const P = M.D.playGroups; return P ? Object.keys(P.groups).find(g => P.groups[g].includes(id)) || null : null; };
+export function playMonths() {
+  const P = M.D.playGroups; if (!P) return [];
+  return P.months.map((s, i) => {
+    const [y, m] = s.split('-').map(Number), last = new Date(y, m, 0, 12);
+    return { i, y, m: m - 1, first: new Date(y, m - 1, 1, 12), last, status: statusOf(last),
+      hosts: Object.keys(P.groups).map(g => ({ g, child: childById(P.groups[g][i]) })) };
+  });
 }
 
 export function calendarItems() {
