@@ -3,9 +3,10 @@ import { t, lang, cap, monthName, monthCap, fmtLong, fmtSpan, joinList, feedTitl
 
 export const HUES = { G1: '#3A7BD5', G2: '#E8553D', G3: '#B07800', G4: '#C2408A', G5: '#6A4FC9', G6: '#13857E' };
 export const TINTS = { G1: '#D3E4FF', G2: '#FFD8CC', G3: '#FFE9A8', G4: '#FFD3EA', G5: '#E1D8FF', G6: '#C6EFEA' };
+export const PLAY_HUES = { 1: '#C9761A', 2: '#D2553F', 3: '#4E8F2E', 4: '#4A6FB8', 5: '#9A6A12' };
 export const ROUTES = [
   { id: 'hjul', hash: '#/' }, { id: 'aar', hash: '#/de-10-aar' }, { id: 'grupper', hash: '#/grupper' },
-  { id: 'foedselsdage', hash: '#/foedselsdage' }, { id: 'kalender', hash: '#/kalender' }
+  { id: 'foedselsdage', hash: '#/foedselsdage' }, { id: 'leg', hash: '#/legegrupper' }, { id: 'kalender', hash: '#/kalender' }
 ];
 
 export const M = { D: null, feed: [], meta: null, overrides: {} };
@@ -90,6 +91,29 @@ function overrideAt(key) {
 }
 const overrideFor = (y, did) => overrideAt(`${y.id}.${did}`);
 
+// ---------- play groups (legegrupper) ----------
+// class.json: "playGroups": { "2026-27": { "1": { "10": ["childId"], "11": ["childId", "childId"], ... } } }
+// Each month one child (sometimes two) hosts the group; the date goes in overrides.json as
+// "2026-27.leg.1.oktober": "2026-10-21T15:00" (school year, group number, Danish month name).
+const MONTH_KEYS = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'december'];
+export const playYear = () => (M.D.playGroups || {})[M.D.years[currentYearIdx()].id] || null;
+export function playGroupOf(id) {
+  const P = playYear(); if (!P) return null;
+  return Object.keys(P).find(g => Object.values(P[g]).some(h => h.includes(id))) || null;
+}
+export function playMembers(g) {
+  const seen = []; Object.values(playYear()[g]).forEach(h => h.forEach(id => { if (!seen.includes(id)) seen.push(id); }));
+  return seen;
+}
+export function playDates(g) {
+  const y = M.D.years[currentYearIdx()], P = playYear()[g];
+  return Object.keys(P).map(Number).sort((a, b) => (a < 8 ? a + 12 : a) - (b < 8 ? b + 12 : b)).map(m => {
+    const calYear = m >= 8 ? y.start : y.start + 1, ev = overrideAt(`${y.id}.leg.${g}.${MONTH_KEYS[m - 1]}`);
+    const date = ev ? parseD(ev.s) : new Date(calYear, m, 0, 12);
+    return { g, month: m, calYear, hosts: P[m].map(childById).filter(Boolean), ev, date, first: new Date(calYear, m - 1, 1, 12), status: statusOf(date) };
+  });
+}
+
 export function statusOf(date) {
   const tt = today();
   return date < tt ? 'done' : (date.getFullYear() === tt.getFullYear() && date.getMonth() === tt.getMonth()) ? 'now' : 'upcoming';
@@ -153,7 +177,11 @@ export function calendarItems() {
     const ev = overrideAt(`${y.id}.fest.${bg}`); if (!ev) return;
     items.push({ id: 'fest-' + bg, date: parseD(ev.s), kind: 'fest', title: t('bdParty', bdLabel(bg)), sub: ev.time ? t('kl', ev.time) : null, source: t('srcOverride'), bg, time: ev.time });
   });
-  const order = { ferie: 0, skole: 1, opgave: 2, fest: 3, foedselsdag: 4 };
+  if (playYear()) Object.keys(playYear()).forEach(g => playDates(g).forEach(p => {
+    if (!p.ev) return;
+    items.push({ id: `leg-${g}-${p.month}`, date: p.date, kind: 'leg', title: t('playDateAt', joinList(p.hosts.map(k => k.name))), sub: p.ev.time ? t('kl', p.ev.time) : null, source: t('srcOverride'), pg: g, play: p, time: p.ev.time });
+  }));
+  const order = { ferie: 0, skole: 1, opgave: 2, fest: 3, leg: 4, foedselsdag: 5 };
   items.sort((a, b) => a.date - b.date || order[a.kind] - order[b.kind]);
   return items;
 }
