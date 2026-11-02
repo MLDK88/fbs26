@@ -69,11 +69,16 @@ export function whoText(code) {
 // ---------- feed matching (brief 9.3) ----------
 function yearWindow(y) { return [new Date(y.start, 7, 1), new Date(y.start + 1, 7, 1)]; }
 
+// SkoleIntra events the school arranges itself. They are never linked to a parents' duty,
+// so they show as school events ("Skolen") and not as a group's task.
+const SCHOOL_RUN = ['julefest'];
+const schoolRun = e => SCHOOL_RUN.some(s => e.t.toLowerCase().includes(s));
+
 function matchFeed(yi, did) {
   const duty = dutyById(did);
   if (!duty.feedMatch) return null;
   const [lo, hi] = yearWindow(M.D.years[yi]);
-  let c = M.feed.filter(e => { const d = parseD(e.s); return d >= lo && d < hi && e.t.toLowerCase().includes(duty.feedMatch); });
+  let c = M.feed.filter(e => { const d = parseD(e.s); return d >= lo && d < hi && !schoolRun(e) && e.t.toLowerCase().includes(duty.feedMatch); });
   if (did === 'referent1' || did === 'referent2') {
     c = c.filter(e => !e.t.toLowerCase().includes('kontakt')).filter(e => { const m = parseD(e.s).getMonth(); return did === 'referent1' ? m >= 7 : m < 7; });
   }
