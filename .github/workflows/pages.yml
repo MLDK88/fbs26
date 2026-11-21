@@ -29,5 +29,15 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
-      - id: deployment
+      # GitHubs artefakt-API er nogle gange et par sekunder bagud lige efter upload
+      # ("No artifacts named github-pages were found"). Proev derfor igen efter en pause.
+      - id: deploy1
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+      - if: steps.deploy1.outcome == 'failure'
+        run: sleep 30
+      - id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+      - id: deployment
+        run: echo "page_url=${{ steps.deploy1.outputs.page_url || steps.deploy2.outputs.page_url }}" >> "$GITHUB_OUTPUT"
